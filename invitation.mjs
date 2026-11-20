@@ -51,14 +51,15 @@ function addInvitationMusic() {
   if (!AudioEngine) return;
   const control = document.createElement("button");
   control.type = "button";
-  control.textContent = "♪ 음악 재생";
+  control.textContent = "OFF";
+  control.setAttribute("aria-label", "배경음악");
   control.setAttribute("aria-pressed", "false");
   Object.assign(control.style, {
-    display: "block", margin: "16px auto 0", padding: "9px 16px",
-    minHeight: "44px", border: "1px solid #d5b76870", borderRadius: "20px",
-    background: "#141e35", color: "#f9e4ab", font: "inherit", cursor: "pointer"
+    position: "absolute", top: "18px", right: "18px", zIndex: "2",
+    padding: "0 8px", minWidth: "44px", minHeight: "32px", border: "1px solid #d5b76870", borderRadius: "20px",
+    background: "#141e35", color: "#f9e4ab", font: "600 11px system-ui, sans-serif", cursor: "pointer"
   });
-  document.querySelector(".hero").append(control);
+  document.querySelector(".invitation").append(control);
 
   let context;
   let source;
@@ -102,7 +103,7 @@ function addInvitationMusic() {
   function showState() {
     const playing = Boolean(source && context?.state === "running");
     control.setAttribute("aria-pressed", String(playing));
-    control.textContent = playing ? "♪ 음악 끄기" : "♪ 음악 재생";
+    control.textContent = playing ? "ON" : "OFF";
   }
 
   function startMusic() {
@@ -113,7 +114,7 @@ function addInvitationMusic() {
     source.loop = true;
     const volume = context.createGain();
     volume.gain.setValueAtTime(0, context.currentTime);
-    volume.gain.linearRampToValueAtTime(0.8, context.currentTime + 0.65);
+    volume.gain.linearRampToValueAtTime(0.6, context.currentTime + 0.65);
     source.connect(volume).connect(context.destination);
     source.start();
     showState();
@@ -146,8 +147,18 @@ function addInvitationMusic() {
       tryPlay();
     }
   });
+  function startOnInteraction(event) {
+    if (!event.isTrusted || control.contains(event.target) || !requested || source) return;
+    tryPlay();
+  }
+
+  // A permitted gesture can resume audio when autoplay was blocked.
+  document.addEventListener("click", startOnInteraction, { capture: true });
+  document.addEventListener("keydown", startOnInteraction, { capture: true });
+  document.addEventListener("touchend", startOnInteraction, { capture: true, passive: true });
   tryPlay();
 }
 
 addInvitationMusic();
+
 
